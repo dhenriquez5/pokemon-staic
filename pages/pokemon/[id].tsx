@@ -12,7 +12,7 @@ interface Props {
 }
 
 const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
-   
+
     const [isFavorite, setIsFavorite] = useState(false);
     const onToggleFavorite = () => {
         localFavorites.toggleFavorite(pokemon.id);
@@ -21,7 +21,7 @@ const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
     useEffect(() => {
         setIsFavorite(localFavorites.existInFavorites(pokemon.id))
     }, [pokemon.id])
-    
+
 
     return (
         <Layout title={pokemon.name} >
@@ -38,11 +38,11 @@ const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
                     <Card>
                         <Card.Header css={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Text h1 transform='capitalize'>{pokemon.name}</Text>
-                            <Button ghost={!isFavorite} onClick={onToggleFavorite} color='gradient' >{isFavorite?'Quitar Favorito':'Guardar Favorito'}</Button>
+                            <Button ghost={!isFavorite} onClick={onToggleFavorite} color='gradient' >{isFavorite ? 'Quitar Favorito' : 'Guardar Favorito'}</Button>
                         </Card.Header>
                         <Card.Body>
                             <Text size={30}>Sprites: </Text>
-                            <Container direction='row' display='flex' gap={0} wrap='nowrap'> 
+                            <Container direction='row' display='flex' gap={0} wrap='nowrap'>
                                 <Image src={pokemon.sprites.front_default} alt={pokemon.name} width="100%" height={100} />
                                 <Image src={pokemon.sprites.back_default} alt={pokemon.name} width="100%" height={100} />
                                 <Image src={pokemon.sprites.front_shiny} alt={pokemon.name} width="100%" height={100} />
@@ -66,22 +66,40 @@ const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
 // The page must be pre-rendered (for SEO) and be very fast — getStaticProps generates HTML and JSON files, both of which can be cached by a CDN for performance
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-    const pokemon151=[...Array(151)].map((value,index)=>`${index+1}`)
+    const pokemon151 = [...Array(151)].map((value, index) => `${index + 1}`)
     return {
         paths: pokemon151.map(id => ({
             params: { id }
         })),
-        fallback: false
+        // fallback: false
+        fallback: 'blocking'
     }
 }
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
     const { id } = params as { id: string };
-    const { data } = await pokeApi.get<Pokemon>('/pokemon/' + id);
+    let pokemon;
+    try {
+        const { data } = await pokeApi.get<Pokemon>('/pokemon/' + id);
+        pokemon = data;
+    } catch (error) {
+        pokemon = null;
+    }
+
+    if(!pokemon){
+        return {
+            redirect:{
+                destination:'/',
+                permanent:false
+            }
+        }
+    }
+
     return {
         props: {
-            pokemon: data
-        }
+            pokemon: pokemon
+        },
+        revalidate: 86400
     }
 }
 
