@@ -66,19 +66,18 @@ const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
 // The page must be pre-rendered (for SEO) and be very fast — getStaticProps generates HTML and JSON files, both of which can be cached by a CDN for performance
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-    const { data } = await pokeApi.get<PokemonList>("/pokemon?limit=151");
-    const pokemon151= data.results.map(poke=> poke.name)
+    const pokemon151=[...Array(151)].map((value,index)=>`${index+1}`)
     return {
-        paths: pokemon151.map(name => ({
-            params: { name }
+        paths: pokemon151.map(id => ({
+            params: { id }
         })),
         fallback: false
     }
 }
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-    const { name } = params as { name: string };
-    const { data } = await pokeApi.get<Pokemon>('/pokemon/' + name);
+    const { id } = params as { id: string };
+    const { data } = await pokeApi.get<Pokemon>('/pokemon/' + id);
     return {
         props: {
             pokemon: data
